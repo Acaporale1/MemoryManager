@@ -1,7 +1,6 @@
 # MEMORY MANAGER - First Fit
 
-The goal of this project is to implement the First Fit Memory Manager Algorithm. With this algorithm, each process is allocated into the first available hole of memory.
-
+The goal of this project is to implement the First Fit Memory Manager Algorithm. With this algorithm, each process is allocated into the first available hole of memory. This program implements the use of objects and arrays. This implementation is similar to a relational database that maps unique IDs together
 ## Getting Started
 
 Launch the index.html document to open the simulator.
