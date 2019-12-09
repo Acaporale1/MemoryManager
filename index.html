@@ -1,0 +1,540 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Untitled Document</title>
+<style>
+
+.textfield {
+    font-family: "Gill Sans", sans-serif;
+    font-size: 14pt;
+    width: 75px;
+}
+.timeline {
+    height: 100px;
+    width: 950px;
+    font-size: 14pt;/* background-color: lightblue;*/
+}
+.button {
+    font-size: 16pt;
+    color: white;
+    background-color: #A933FF;
+    border: 2px solid #6B03C1;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.container {
+    font-size: 16pt;
+    font-family: "Gill Sans", sans-serif;
+    /*margin-bottom: 20px;*/
+    background-color: #F6F8F7;
+    box-shadow: 0px 10px 13px -7px #000000, 0px 0px 13px 8px rgba(0,0,0,0);
+    width: 400px;
+    padding: 10px;
+}
+.memmanager {
+    /*font-size: 36pt;*/ 
+    font-family: 'Oleo Script', cursive;
+    font-size: 48px;
+}
+select {
+    font-size: 14pt;
+    font-family: "Gill Sans", sans-serif;
+}
+.refresh {
+    font-size: 24pt;
+    color: white;
+    background-color: red;
+    border-radius: 8px;
+    border: 2px solid #8B0000;
+    cursor: pointer;
+    /*clear:left;*/
+    float: right;
+}
+.svg-style {
+    background-color: bisque;
+}
+.column {
+    float: left;
+    
+    min-width: 150;
+    padding: 10px;
+    height: 300px;
+}
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+</style>
+</head>
+
+<body>
+<div align ="left">
+  <label id="memmanager" class="memmanager">Memory Manager</label>
+	&emsp;<button class = "button" onclick="help()"style="background-color: darkorange;border-color: darkgoldenrod">?</button>
+  <br>
+  <br>
+</div>
+	
+<div class="row" style="min-width: 1000px">
+  <div id="memarr" class="column"> 0 <br>
+    <div id= "container" style="width:150px;height: 600px;background-color:dimgrey; float: left"></div><br>
+    600<br>
+  </div>
+  <div class="column" style="min-width: 150px">
+    <!--    Select Mem Manager Algorithm-->
+    Algorithm:
+    <select name="memoryAlg" id="memoryAlg" onchange="getSelectedAlg()">
+      <option selected value ="SaA"disabled>Select An Algorithm</option>
+      <option value="First Fit">First Fit</option>
+      <option value="Best Fit" disabled>Best Fit</option>
+      <option value="Worst Fit" disabled>Worst Fit</option>
+    </select>
+    <br>
+    <!--    Insert Processes-->
+    Process ID:
+    <select id="memorymanagers" onchange="getSelectedP()">
+      <option selected value ="SaP"disabled>Select A Process</option>
+      <option value ="1">P1</option>
+      <option value ="2">P2</option>
+      <option value ="3">P3</option>
+      <option value ="4">P4</option>
+      <option value ="5">P5</option>
+      <option value ="6">P6</option>
+      <option value ="7">P7</option>
+      <option value ="8">P8</option>
+      <option value ="9">P9</option>
+      <option value ="10">P10</option>
+    </select>
+    <br>
+    <br>
+    Process Size:
+    <input type="number" id="pSize" class = "textfield">
+    K 
+    &emsp;
+    <button class = "button" onclick="randomizeSize()">Randomize Size</button>
+    <br>
+    <br>
+ &emsp; &emsp; &emsp; &emsp; &thinsp;
+    <button class ="button" onclick="addToMem()"style ="background-color: green; border: 2px solid darkgreen;">+</button>
+   &emsp;
+    <button class = "button" onclick="remFromMem()" style ="background-color: red; border: 2px solid darkred;width: 30px">-</button>
+    <br>
+    <br><br><br>
+	   &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp;&emsp;
+    <button class = "button" style ="background-color: red; border: 2px solid darkred;" onclick="compactMem()">Compact Memory</button>
+  </div>
+</div>
+	
+<script>
+	/*
+		The only bug is when you ....
+	*/
+	function help(){
+		alert("*************************THE MAX SIZE IS 600K***************************\n1.Select which algorithm you want to implement.\n2.Select a process from the dropdown menu and allocate a size in the corresponding text box.\n3.Press the '+' to add the process to memory, or press '-' to remove it.\n4.Click the processes that exist in memory to view it's size.\n5.Compact memory will eliminate gaps of free memory.\n6.To start over, refresh the page.\n********************************HAVE FUN********************************");
+	}
+	function getSelectedP(){
+    	pid = document.getElementById("memorymanagers").value;
+	}
+	var processList = [];
+	// processObj = {processID, processSize}
+	var partitionList = [];
+	// partitionListObj = {partitionID, partitionXStart, partitionXEnd, processes[], hasFreeSpace = t||f}
+	var partitionFreeSpaceList = [];
+	//partitionFreeSpaceObj = {partitionID, xStart, xEnd}
+	var partitionTakenSpaceList = [];
+	//partitionFreeSpaceObj +  partitionTakenSpaceObj = {processID, partitionID, xStart, xEnd}
+	function addToMem(){
+		var newProcessId = document.getElementById("memorymanagers").value;
+		var newProcessSize = document.getElementById("pSize").value;
+		
+		var alreadyInMem = false;
+		for(var i = 0; i < processList.length; i++) {
+			if(processList[i].ProcessID == newProcessId) {
+				alreadyInMem = true;
+			}
+		}
+		// First Fit
+		/*
+			partitionList will have another list of where exactly the free space is available
+			partitionFreeSpace = {end of first, start of next}
+			
+			1. Check If a Partition has free space available
+			2. if not
+					create a partition
+			   if so
+			   		add to partition
+	
+		*/
+		if(alreadyInMem == false) {
+			if(partitionList.length == 0) {
+				var newPartitionListObj = {PartitionID: 11, PartitionXStart: 120, PartitionxEnd: (Number(120) + Number(newProcessSize)), HasFreeSpace: false , FreeSpaceAvailable: 0};
+				
+				partitionList.push(newPartitionListObj);
+				
+				var newPartitionTakenSpaceObj = {ProcessID: newProcessId, PartitionID: 11, XStart: 120, XEnd: (Number(120) + Number(newProcessSize))};
+				partitionTakenSpaceList.push(newPartitionTakenSpaceObj);
+				
+				var newProcessObj = {ProcessID: newProcessId, ProcessSize: Number(newProcessSize), ProcessXStart: 120, ProcessXEnd: (Number(120) + Number(newProcessSize))};
+				processList.push(newProcessObj);
+				// var newPartitionFreeSpaceObj  no Free space to create here since the partition takes the size of the first process entered.
+				
+				// Now Create the Gui for this
+				var partitionSelect = document.getElementById("memorymanagers").value;
+    			var partitionNode = document.createElement("button");
+				
+				partitionNode.style.width = "150px";
+//				partitionNode.innerHTML = partitionSelect;
+				partitionNode.style.position = "absolute";
+				partitionNode.style.zIndex = 0;
+				partitionNode.style.backgroundColor = getRandomColor();
+				partitionNode.style.top = (newPartitionListObj.PartitionXStart + "px");
+				partitionNode.style.height = (newProcessSize+ "px");
+				partitionNode.id = newPartitionListObj.PartitionID;
+				document.getElementById("memarr").appendChild(partitionNode);
+				
+				var processSelect = document.getElementById("memorymanagers").value;
+    			var processNode = document.createElement("button");
+				var nodeLabel = document.createElement("label");
+				var text= document.createTextNode(newProcessId);
+				nodeLabel.appendChild(text);
+				nodeLabel.style.top=newProcessObj.ProcessXEnd;
+				nodeLabel.style.marginLeft="300px";
+				processNode.style.width = "150px";
+				processNode.innerHTML = "P"+processSelect;
+				processNode.style.position = "absolute";
+				processNode.style.zIndex = 1;
+			
+    			processNode.style.top = (newProcessObj.ProcessXStart + "px");
+				processNode.style.height= (newProcessSize + "px");
+    			processNode.id = newProcessId;
+				processNode.addEventListener("click", function(){ alert("P"+newProcessId+"'s Size Is: "+newProcessSize); });
+				document.getElementById("memarr").appendChild(processNode);
+				//document.getElementById("divvy").appendChild(nodeLabel);
+				
+			} else {
+				var freePartitionSpace = false;
+				var freeSpotIndex = null;
+				var partitionInxed = null;
+	
+				for(var i = 0; i < partitionList.length; i++) {
+					//Check if there is a free partition
+					//Check if there is enough space
+					if(partitionList[i].HasFreeSpace == true) {
+						// TODO
+						for(var j = 0; j < partitionFreeSpaceList.length; j++) {
+							if(freePartitionSpace == true) {
+								break;
+							} else {
+								if(partitionFreeSpaceList[j].PartitionID == partitionList[i].PartitionID) {
+									
+									var freeSpaceHeight = Number(partitionFreeSpaceList[j].xStart) - Number(partitionFreeSpaceList[j].xEnd);
+									if(freeSpaceHeight <= newProcessSize) {
+										
+										//Here we have found a free spot
+										//get free spot index
+										//get partitionlist index
+										freeSpotIndex = j;
+										partitionInxed = i;
+										freePartitionSpace = true;
+										break;
+									}	
+								}
+							}
+						}
+					}
+				}
+				
+				if(freePartitionSpace) {
+					
+					// Here there is free space to add the process to the partition
+					// TODO
+					var freeSpaceXStart = partitionFreeSpaceList[freeSpotIndex].xStart;
+					
+					var freeSpaceXEnd = partitionFreeSpaceList[freeSpotIndex].xEnd;
+					
+					partitionFreeSpaceList[freeSpotIndex].xStart = freeSpaceXEnd + 1;
+					partitionFreeSpaceList[freeSpotIndex].xEnd = Number(freeSpaceXStart) + Number(newProcessSize) ;
+					
+					//partitionTakenSpaceObj = {processID, partitionID, xStart, xEnd}
+					var newPartitionTakenSpaceObj = {ProcessID: newProcessId, PartitionID: partitionList[partitionInxed].PartitionID, XStart: freeSpaceXStart, XEnd: (Number(freeSpaceXEnd) + Number(newProcessSize))};
+					partitionTakenSpaceList.push(newPartitionTakenSpaceObj);
+					
+					var newProcessObj = {ProcessID: newProcessId, ProcessSize: Number(newProcessSize), ProcessXStart: freeSpaceXStart, ProcessXEnd: (Number(freeSpaceXStart) + Number(newProcessSize))};
+					processList.push(newProcessObj);
+					
+					var newFreeSpaceInPartition = Number(partitionList[partitionInxed].FreeSpaceAvailable) - Number(newProcessSize);
+					partitionList[partitionInxed].FreeSpaceAvailable = newFreeSpaceInPartition;
+					if(newFreeSpaceInPartition == 0) {
+						partitionList[partitionInxed].HasFreeSpace = false;
+					}
+					var partitionFreeSpaceObj = {PartitionID: partitionList[partitionInxed].PartitionID, xStart: (Number(freeSpaceXStart) + Number(newProcessSize)), xEnd: partitionList[partitionInxed].PartitionxEnd};
+					partitionFreeSpaceList.push(partitionFreeSpaceObj);
+					//going to have to organize free space and such
+					var processSelect = document.getElementById("memorymanagers").value;
+    				var processNode = document.createElement("button");
+					processNode.style.width = "150px";
+					processNode.innerHTML = "P"+processSelect;
+					processNode.style.position = "absolute";
+					processNode.style.zIndex = 1;
+    				processNode.style.top = (freeSpaceXStart + "px");
+					processNode.style.height= (newProcessSize + "px");
+    				processNode.id = newProcessId;
+					processNode.addEventListener("click", function(){ alert("P"+newProcessId+"'s Size Is: "+newProcessSize); });
+					document.getElementById("memarr").appendChild(processNode);
+					
+					// now remove the free space edit it.
+					
+				} else {
+					// Here there is no free space so create a partition
+					/*
+						1. Figure out where there is free space for a new partition.
+						2. See if new Partition Fits
+						3. Add GUI
+						727 = end of array
+						
+						THIS IS DONE
+					*/
+					if(partitionList.length == 1) {
+						// only one partition is in
+						var xStart = partitionList[0].PartitionxEnd;
+						var newPartitionListObj = {PartitionID: 22, PartitionXStart: xStart, PartitionxEnd: (Number(xStart) + Number(newProcessSize)), HasFreeSpace: false , FreeSpaceAvailable: 0};
+				
+						partitionList.push(newPartitionListObj);
+				
+						var newPartitionTakenSpaceObj = {ProcessID: newProcessId, PartitionID: 22, XStart: xStart, XEnd: (Number(xStart) + Number(newProcessSize))};
+						partitionTakenSpaceList.push(newPartitionTakenSpaceObj);
+						
+						var newProcessObj = {ProcessID: newProcessId, ProcessSize: Number(newProcessSize), ProcessXStart: xStart, ProcessXEnd: (Number(xStart) + Number(newProcessSize))};
+						processList.push(newProcessObj);
+						// var newPartitionFreeSpaceObj  no Free space to create here since the partition takes the size of the first process entered.
+						
+						// Now Create the Gui for this
+						var partitionSelect = document.getElementById("memorymanagers").value;
+    					var partitionNode = document.createElement("button");
+						partitionNode.style.width = "150px";
+//						partitionNode.innerHTML = partitionSelect;
+						partitionNode.style.position = "absolute";
+						partitionNode.style.zIndex = 0;
+						partitionNode.style.backgroundColor = getRandomColor();
+						partitionNode.style.top = (newPartitionListObj.PartitionXStart + "px");
+						partitionNode.style.height = (newProcessSize+ "px");
+						partitionNode.id = newPartitionListObj.PartitionID;
+						document.getElementById("memarr").appendChild(partitionNode);
+						
+						var processSelect = document.getElementById("memorymanagers").value;
+    					var processNode = document.createElement("button");
+						processNode.style.width = "150px";
+						processNode.innerHTML = "P"+processSelect;
+						processNode.style.position = "absolute";
+						processNode.style.zIndex = 1;
+    					processNode.style.top = (newProcessObj.ProcessXStart + "px");
+						processNode.style.height= (newProcessSize + "px");
+    					processNode.id = newProcessId;
+						processNode.addEventListener("click", function(){ alert("P"+newProcessId+"'s Size Is: "+newProcessSize); });
+						document.getElementById("memarr").appendChild(processNode);
+						
+					} else {
+						// more than one partition is in
+						var newPartitionXStart = partitionList[partitionList.length - 1].PartitionxEnd;
+						//if there is no room to create a partition, you cannot add process to the memory
+						if((Number(newPartitionXStart) + Number(newProcessSize)) >= 721) {
+							// Alert you cannot add - exceeded limit
+							alert("EXCEEDED LIMIT");
+						} else {
+							var newPartitionID = Number(partitionList[partitionList.length - 1].PartitionID) + 11;
+							
+							var newPartitionListObj = {PartitionID: newPartitionID, PartitionXStart: newPartitionXStart, PartitionxEnd: (Number(newPartitionXStart) + Number(newProcessSize)), HasFreeSpace: false , FreeSpaceAvailable: 0};
+					
+							partitionList.push(newPartitionListObj);
+					
+							var newPartitionTakenSpaceObj = {ProcessID: newProcessId, PartitionID: newPartitionID, XStart: newPartitionXStart, XEnd: (Number(newPartitionXStart) + Number(newProcessSize))};
+							partitionTakenSpaceList.push(newPartitionTakenSpaceObj);
+							
+							var newProcessObj = {ProcessID: newProcessId, ProcessSize: Number(newProcessSize), ProcessXStart: newPartitionXStart, ProcessXEnd: (Number(newPartitionXStart) + Number(newProcessSize))};
+							processList.push(newProcessObj);
+							// var newPartitionFreeSpaceObj  no Free space to create here since the partition takes the size of the first process entered.
+							
+							// Now Create the Gui for this
+							var partitionSelect = document.getElementById("memorymanagers").value;
+    						var partitionNode = document.createElement("button");
+							partitionNode.style.width = "150px";
+//							partitionNode.innerHTML = partitionSelect;
+							partitionNode.style.position = "absolute";
+							partitionNode.style.zIndex = 0;
+							partitionNode.style.backgroundColor = getRandomColor();
+							partitionNode.style.top = (newPartitionListObj.PartitionXStart + "px");
+							partitionNode.style.height = (newProcessSize+ "px");
+							partitionNode.id = newPartitionListObj.PartitionID;
+							document.getElementById("memarr").appendChild(partitionNode);
+							
+							var processSelect = document.getElementById("memorymanagers").value;
+    						var processNode = document.createElement("button");
+							processNode.style.width = "150px";
+							processNode.innerHTML = "P"+processSelect;
+							processNode.style.position = "absolute";
+							processNode.style.zIndex = 1;
+    						processNode.style.top = (newProcessObj.ProcessXStart + "px");
+							processNode.style.height= (newProcessSize + "px");
+    						processNode.id = newProcessId;
+							processNode.addEventListener("click", function(){ alert("P"+newProcessId+"'s Size Is: "+newProcessSize); });
+							document.getElementById("memarr").appendChild(processNode);
+						}
+					}
+				}
+			}
+		} else {
+			alert("Already In Memory")
+		}
+	}
+		
+	function getRandomColor() {
+  		var letters = '0123456789ABCDEF';
+  		var color = '#';
+  		for (var i = 0; i < 6; i++) {
+    		color += letters[Math.floor(Math.random() * 16)];
+  		}
+  		return color;
+	}
+		
+	function remFromMem(){
+		/*
+			Removing from memory
+			1. Delete the process from the gui
+			2. Delete process from processList
+			3. Add FreeSpace into the freeSpace List
+			4. Remove Taken space from taken space block - free space available
+			5. Update the partitionObject in partitionList
+		*/
+		var newProcessId = document.getElementById("memorymanagers").value;
+		document.getElementById("memarr").removeChild(document.getElementById(newProcessId));
+		var processListIndex = null;
+		var freeSpaceXStart = null;
+		var freeSpaceXEnd = null;
+		for(var i = 0; i < processList.length; i++) {
+			if(processList[i].ProcessID == newProcessId) {
+				processListIndex = i;
+				break;
+			}
+		}
+		var takenSpaceIndexRemove = null;
+		var takenSpacePartitionID = null;
+		for(var i = 0; i < partitionTakenSpaceList.length; i++) {
+			if(partitionTakenSpaceList[i].ProcessID == newProcessId) {
+				takenSpaceIndexRemove = i;
+				takenSpacePartitionID = partitionTakenSpaceList[i].PartitionID;
+				break;
+			}
+		}
+		var partitionListId = null;
+		for(var i = 0; i < partitionList.length; i++) {
+			if(partitionList[i].PartitionID == takenSpacePartitionID) {
+				partitionListId = i;
+			}
+		}
+		var newFreeSpace = Number(partitionList[partitionListId].FreeSpaceAvailable) + Number(processList[processListIndex].ProcessSize);
+		partitionList[partitionListId].FreeSpaceAvailable = newFreeSpace;
+		partitionList[partitionListId].HasFreeSpace = true;
+		partitionTakenSpaceList.splice(takenSpaceIndexRemove,1);
+		
+		
+		var partitionFreeSpaceObj = {PartitionID: takenSpacePartitionID, xStart: processList[processListIndex].ProcessXStart, xEnd: processList[processListIndex].ProcessXEnd};
+		partitionFreeSpaceList.push(partitionFreeSpaceObj);
+		processList.splice(processListIndex, 1);
+	}
+	
+	function compactMem() {
+		
+		
+		console.log(processList)
+		for(var i = 0; i<partitionList.length;i++){
+			document.getElementById("memarr").removeChild(document.getElementById(partitionList[i].PartitionID));
+		}
+		partitionList = [];
+		partitionFreeSpaceList = [];
+		partitionTakenSpaceList = []; // add taken spots back
+		
+		
+
+		for(var i = 0; i<processList.length; i++) {
+			var size = processList[i].ProcessSize;
+			var processID = processList[i].ProcessID;
+			document.getElementById("memarr").removeChild(document.getElementById(processID));
+			if(i == 0) {
+				processList[i].ProcessXStart = 120;
+				processList[i].ProcessXEnd = Number(120) + Number(size);
+				var newPartitionListObj = {PartitionID: 11, PartitionXStart: 120, PartitionxEnd: (Number(120) + Number(size)), HasFreeSpace: false , FreeSpaceAvailable: 0};
+				partitionList.push(newPartitionListObj);
+				var newPartitionTakenSpaceObj = {ProcessID: processID, PartitionID: 11, XStart: 120, XEnd: (Number(120) + Number(size))};
+				partitionTakenSpaceList.push(newPartitionTakenSpaceObj);
+				
+				// Now Create the Gui for this
+				var partitionSelect = document.getElementById("memorymanagers").value;
+    			var partitionNode = document.createElement("button");
+				partitionNode.style.width = "150px";
+//				partitionNode.innerHTML = partitionSelect;
+				partitionNode.style.position = "absolute";
+				partitionNode.style.zIndex = 0;
+				partitionNode.style.backgroundColor = getRandomColor();
+				partitionNode.style.top = "120px";
+				partitionNode.style.height = (size + "px");
+				partitionNode.id = 11;
+				document.getElementById("memarr").appendChild(partitionNode);
+				
+				var processSelect = document.getElementById("memorymanagers").value;
+    			var processNode = document.createElement("button");
+				processNode.style.width = "150px";
+				processNode.innerHTML = "P"+processID;
+				processNode.style.position = "absolute";
+				processNode.style.zIndex = 1;
+    			processNode.style.top = "120px";
+				processNode.style.height= (size + "px");
+    			processNode.id = processID;				
+				processNode.addEventListener("click", function(){ alert("P"+newProcessId+"'s Size Is: "+newProcessSize); });
+				document.getElementById("memarr").appendChild(processNode);
+			} else if ( i <= 1) {
+				
+				var processXStart = partitionList[partitionList.length-1].PartitionxEnd;
+				var processXEnd = Number([processXStart]) + Number(size);
+				var newPartitionID = Number(partitionList[partitionList.length-1].PartitionID) + Number(11);
+				
+				var newPartitionListObj = {PartitionID: newPartitionID, PartitionXStart: processXStart, PartitionxEnd: processXEnd, HasFreeSpace: false , FreeSpaceAvailable: 0};
+				partitionList.push(newPartitionListObj);
+				var newPartitionTakenSpaceObj = {ProcessID: processID, PartitionID: newPartitionID, XStart: processXStart, XEnd: processXEnd};
+				partitionTakenSpaceList.push(newPartitionTakenSpaceObj);
+				
+				// Now Create the Gui for this
+				var partitionSelect = document.getElementById("memorymanagers").value;
+    			var partitionNode = document.createElement("button");
+				partitionNode.style.width = "150px";
+//				partitionNode.innerHTML = partitionSelect;
+				partitionNode.style.position = "absolute";
+				partitionNode.style.zIndex = 0;
+				partitionNode.style.backgroundColor = getRandomColor();
+				partitionNode.style.top = "120px";
+				partitionNode.style.height = (size + "px");
+				partitionNode.id = newPartitionID;
+				document.getElementById("memarr").appendChild(partitionNode);
+				
+    			var processNode = document.createElement("button");
+				//processNode.innerHTML.label = processID;
+				processNode.style.width = "150px";
+				processNode.innerHTML = "P"+processID;
+				processNode.style.position = "absolute";
+				processNode.style.zIndex = 1;
+    			processNode.style.top = "120px";
+				processNode.style.height= (size + "px");
+    			processNode.id = processID;
+				processNode.addEventListener("click", function(){ alert("P"+newProcessId+"'s Size Is: "+newProcessSize); });
+				document.getElementById("memarr").appendChild(processNode);
+			}
+			
+		}
+		console.log(processList)
+	}
+	
+</script>
+
+</body>
+</html>
