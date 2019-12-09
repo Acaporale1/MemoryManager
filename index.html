@@ -120,19 +120,24 @@ select {
     <button class ="button" onclick="addToMem()"style ="background-color: green; border: 2px solid darkgreen;">+</button>
    &emsp;
     <button class = "button" onclick="remFromMem()" style ="background-color: red; border: 2px solid darkred;width: 30px">-</button>
-    <br>
-    <br><br><br>
-	   &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp;&emsp;
-    <button class = "button" style ="background-color: red; border: 2px solid darkred;" onclick="compactMem()">Compact Memory</button>
+    
+	 &emsp;&thinsp;&thinsp;&thinsp;&thinsp;
+	  
+	  <button class = "button" style ="background-color: red; border: 2px solid darkred;" onclick="compactMem()">Compact Memory</button>
+	  <br><br><br><br>
+	   &emsp;
+	  <button class = "button" style ="background-color:hotpink; border: 2px solid deepPink;font-size:26pt " onclick="startOver()">START OVER</button>
   </div>
 </div>
 	
 <script>
-	/*
-		The only bug is when you ....
-	*/
+	
+	function startOver(){
+		//reload the page to start over
+            window.location.reload();
+	}
 	function help(){
-		alert("*************************THE MAX SIZE IS 600K***************************\n1.Select which algorithm you want to implement.\n2.Select a process from the dropdown menu and allocate a size in the corresponding text box.\n3.Press the '+' to add the process to memory, or press '-' to remove it.\n4.Click the processes that exist in memory to view it's size.\n5.Compact memory will eliminate gaps of free memory.\n6.To start over, refresh the page.\n********************************HAVE FUN********************************");
+		alert("*************************THE MAX SIZE IS 600K***************************\n1.Select which algorithm you want to implement.\n2.Select a process from the dropdown menu and allocate a size in the corresponding text box.\n3.Press the '+' to add the process to memory, or press '-' to remove it.\n4.Click the processes that exist in memory to view it's size.\n5.Compact memory will eliminate gaps of free memory.\n6.To start over, click the 'START OVER' button.\n********************************HAVE FUN********************************");
 	}
 	function getSelectedP(){
     	pid = document.getElementById("memorymanagers").value;
@@ -385,11 +390,12 @@ select {
 				}
 			}
 		} else {
-			alert("Already In Memory")
+			alert("Already In Memory! Try Again.")
 		}
 	}
 		
 	function getRandomColor() {
+		//random color gen. for free space partitions
   		var letters = '0123456789ABCDEF';
   		var color = '#';
   		for (var i = 0; i < 6; i++) {
